@@ -587,12 +587,12 @@ impl App {
     }
 
     pub fn mark_selected_for_compare(&mut self) {
-        let Some(fit) = self.selected_fit() else {
+        let Some(model_name) = self.selected_fit().map(|fit| fit.model.name.clone()) else {
             self.pull_status = Some("No selected model to mark".to_string());
             return;
         };
-        self.compare_mark_model = Some(fit.model.name.clone());
-        self.pull_status = Some(format!("Marked '{}' for compare", fit.model.name));
+        self.compare_mark_model = Some(model_name.clone());
+        self.pull_status = Some(format!("Marked '{}' for compare", model_name));
     }
 
     pub fn clear_compare_mark(&mut self) {
