@@ -1092,7 +1092,7 @@ fn draw_detail(frame: &mut Frame, app: &App, area: Rect, tc: &ThemeColors) {
                 } else if any_available {
                     Span::styled("✗ No  (press d to pull)", Style::default().fg(tc.muted))
                 } else {
-                    Span::styled("- No provider running", Style::default().fg(tc.muted))
+                    Span::styled("- No runtime detected", Style::default().fg(tc.muted))
                 }
             },
         ]),

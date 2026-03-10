@@ -968,7 +968,7 @@ impl App {
         if !download_options.is_empty() {
             self.open_download_provider_popup(model_name, download_options);
         } else {
-            self.pull_status = Some("No compatible provider available for this model".to_string());
+            self.pull_status = Some("No compatible runtime available — install Ollama or llama.cpp".to_string());
         }
     }
 
@@ -1111,7 +1111,7 @@ impl App {
         self.download_provider_options = options;
         self.download_provider_cursor = 0;
         self.input_mode = InputMode::DownloadProviderPopup;
-        self.pull_status = Some("Choose download provider and press Enter".to_string());
+        self.pull_status = Some("Choose download runtime and press Enter".to_string());
     }
 
     pub fn close_download_provider_popup(&mut self) {
