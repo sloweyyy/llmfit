@@ -804,7 +804,11 @@ mod tests {
         };
         let result = estimate_model_plan(&test_model(), &req, &test_specs());
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("--context must be greater than 0"));
+        assert!(
+            result
+                .unwrap_err()
+                .contains("--context must be greater than 0")
+        );
     }
 
     #[test]
@@ -816,7 +820,11 @@ mod tests {
         };
         let result = estimate_model_plan(&test_model(), &req, &test_specs());
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("--target-tps must be greater than 0"));
+        assert!(
+            result
+                .unwrap_err()
+                .contains("--target-tps must be greater than 0")
+        );
     }
 
     #[test]
@@ -933,7 +941,13 @@ mod tests {
     fn test_estimate_tps_gpu_faster_than_cpu() {
         let model = test_model();
         let gpu_tps = estimate_tps(&model, "Q4_K_M", GpuBackend::Cuda, PlanRunPath::Gpu, 8);
-        let cpu_tps = estimate_tps(&model, "Q4_K_M", GpuBackend::CpuX86, PlanRunPath::CpuOnly, 8);
+        let cpu_tps = estimate_tps(
+            &model,
+            "Q4_K_M",
+            GpuBackend::CpuX86,
+            PlanRunPath::CpuOnly,
+            8,
+        );
         assert!(gpu_tps > cpu_tps);
     }
 
@@ -941,7 +955,13 @@ mod tests {
     fn test_estimate_tps_cpu_offload_slower_than_gpu() {
         let model = test_model();
         let gpu_tps = estimate_tps(&model, "Q4_K_M", GpuBackend::Cuda, PlanRunPath::Gpu, 8);
-        let offload_tps = estimate_tps(&model, "Q4_K_M", GpuBackend::Cuda, PlanRunPath::CpuOffload, 8);
+        let offload_tps = estimate_tps(
+            &model,
+            "Q4_K_M",
+            GpuBackend::Cuda,
+            PlanRunPath::CpuOffload,
+            8,
+        );
         assert!(gpu_tps > offload_tps);
     }
 
@@ -957,10 +977,20 @@ mod tests {
     fn test_estimate_tps_with_known_gpu_uses_bandwidth() {
         let model = test_model();
         let bw_tps = estimate_tps_with_gpu(
-            &model, "Q4_K_M", GpuBackend::Cuda, PlanRunPath::Gpu, 8, Some("NVIDIA RTX 4090"),
+            &model,
+            "Q4_K_M",
+            GpuBackend::Cuda,
+            PlanRunPath::Gpu,
+            8,
+            Some("NVIDIA RTX 4090"),
         );
         let fallback_tps = estimate_tps_with_gpu(
-            &model, "Q4_K_M", GpuBackend::Cuda, PlanRunPath::Gpu, 8, None,
+            &model,
+            "Q4_K_M",
+            GpuBackend::Cuda,
+            PlanRunPath::Gpu,
+            8,
+            None,
         );
         // Known GPU should give a different (bandwidth-based) estimate
         assert!((bw_tps - fallback_tps).abs() > 0.01);
@@ -971,14 +1001,21 @@ mod tests {
     #[test]
     fn test_minimum_cores_no_target_returns_default() {
         let model = test_model();
-        let cores = minimum_cores_for_target(&model, "Q4_K_M", GpuBackend::Cuda, PlanRunPath::Gpu, None);
+        let cores =
+            minimum_cores_for_target(&model, "Q4_K_M", GpuBackend::Cuda, PlanRunPath::Gpu, None);
         assert_eq!(cores, Some(4));
     }
 
     #[test]
     fn test_minimum_cores_with_reachable_target() {
         let model = test_model();
-        let cores = minimum_cores_for_target(&model, "Q4_K_M", GpuBackend::Cuda, PlanRunPath::Gpu, Some(5.0));
+        let cores = minimum_cores_for_target(
+            &model,
+            "Q4_K_M",
+            GpuBackend::Cuda,
+            PlanRunPath::Gpu,
+            Some(5.0),
+        );
         assert!(cores.is_some());
         assert!(cores.unwrap() >= 1);
     }
@@ -986,7 +1023,13 @@ mod tests {
     #[test]
     fn test_minimum_cores_unreachable_target_returns_none() {
         let model = test_model();
-        let cores = minimum_cores_for_target(&model, "Q4_K_M", GpuBackend::CpuX86, PlanRunPath::CpuOnly, Some(999999.0));
+        let cores = minimum_cores_for_target(
+            &model,
+            "Q4_K_M",
+            GpuBackend::CpuX86,
+            PlanRunPath::CpuOnly,
+            Some(999999.0),
+        );
         assert!(cores.is_none());
     }
 
@@ -1059,7 +1102,14 @@ mod tests {
         let model = test_model();
         let mut specs = test_specs();
         specs.unified_memory = true;
-        let estimate = build_path_estimate(&model, "Q4_K_M", 4096, None, PlanRunPath::CpuOffload, &specs);
+        let estimate = build_path_estimate(
+            &model,
+            "Q4_K_M",
+            4096,
+            None,
+            PlanRunPath::CpuOffload,
+            &specs,
+        );
         assert!(!estimate.feasible);
         assert!(estimate.notes.iter().any(|n| n.contains("unified-memory")));
     }
@@ -1068,7 +1118,8 @@ mod tests {
     fn test_build_path_estimate_cpu_only_no_vram() {
         let model = test_model();
         let specs = test_specs();
-        let estimate = build_path_estimate(&model, "Q4_K_M", 4096, None, PlanRunPath::CpuOnly, &specs);
+        let estimate =
+            build_path_estimate(&model, "Q4_K_M", 4096, None, PlanRunPath::CpuOnly, &specs);
         assert!(estimate.feasible);
         assert!(estimate.minimum.as_ref().unwrap().vram_gb.is_none());
     }

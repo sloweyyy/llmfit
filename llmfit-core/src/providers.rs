@@ -1984,14 +1984,16 @@ mod tests {
         let result = LlamaCppProvider::select_best_gguf(&files, 3.7);
         assert!(result.is_some());
         let (name, _) = result.unwrap();
-        assert!(name.contains("Q2_K"), "should select Q2_K for 3.7GB budget, got: {}", name);
+        assert!(
+            name.contains("Q2_K"),
+            "should select Q2_K for 3.7GB budget, got: {}",
+            name
+        );
     }
 
     #[test]
     fn test_select_best_gguf_nothing_fits() {
-        let files = vec![
-            ("model-Q2_K.gguf".to_string(), 8_000_000_000u64),
-        ];
+        let files = vec![("model-Q2_K.gguf".to_string(), 8_000_000_000u64)];
         let result = LlamaCppProvider::select_best_gguf(&files, 1.0);
         assert!(result.is_none());
     }
@@ -1999,13 +2001,20 @@ mod tests {
     #[test]
     fn test_select_best_gguf_skips_split_files() {
         let files = vec![
-            ("model-Q4_K_M-00001-of-00003.gguf".to_string(), 4_000_000_000u64),
+            (
+                "model-Q4_K_M-00001-of-00003.gguf".to_string(),
+                4_000_000_000u64,
+            ),
             ("model-Q2_K.gguf".to_string(), 2_000_000_000u64),
         ];
         let result = LlamaCppProvider::select_best_gguf(&files, 10.0);
         assert!(result.is_some());
         let (name, _) = result.unwrap();
-        assert!(name.contains("Q2_K"), "should skip split file, got: {}", name);
+        assert!(
+            name.contains("Q2_K"),
+            "should skip split file, got: {}",
+            name
+        );
     }
 
     #[test]
@@ -2049,20 +2058,29 @@ mod tests {
     fn test_is_model_installed_llamacpp_exact() {
         let mut installed = HashSet::new();
         installed.insert("llama-3.1-8b-instruct".to_string());
-        assert!(is_model_installed_llamacpp("meta-llama/Llama-3.1-8B-Instruct", &installed));
+        assert!(is_model_installed_llamacpp(
+            "meta-llama/Llama-3.1-8B-Instruct",
+            &installed
+        ));
     }
 
     #[test]
     fn test_is_model_installed_llamacpp_stripped_suffixes() {
         let mut installed = HashSet::new();
         installed.insert("llama-3.1-8b".to_string());
-        assert!(is_model_installed_llamacpp("meta-llama/Llama-3.1-8B-Instruct", &installed));
+        assert!(is_model_installed_llamacpp(
+            "meta-llama/Llama-3.1-8B-Instruct",
+            &installed
+        ));
     }
 
     #[test]
     fn test_is_model_installed_llamacpp_not_installed() {
         let installed = HashSet::new();
-        assert!(!is_model_installed_llamacpp("meta-llama/Llama-3.1-8B-Instruct", &installed));
+        assert!(!is_model_installed_llamacpp(
+            "meta-llama/Llama-3.1-8B-Instruct",
+            &installed
+        ));
     }
 
     // ── gguf_pull_tag ────────────────────────────────────────────────
@@ -2123,17 +2141,26 @@ mod tests {
 
     #[test]
     fn test_ollama_installed_matches_exact() {
-        assert!(ollama_installed_matches_candidate("llama3.1:8b", "llama3.1:8b"));
+        assert!(ollama_installed_matches_candidate(
+            "llama3.1:8b",
+            "llama3.1:8b"
+        ));
     }
 
     #[test]
     fn test_ollama_installed_matches_variant_suffix() {
-        assert!(ollama_installed_matches_candidate("llama3.1:8b-instruct-q4_K_M", "llama3.1:8b"));
+        assert!(ollama_installed_matches_candidate(
+            "llama3.1:8b-instruct-q4_K_M",
+            "llama3.1:8b"
+        ));
     }
 
     #[test]
     fn test_ollama_installed_no_match() {
-        assert!(!ollama_installed_matches_candidate("qwen2.5:7b", "llama3.1:8b"));
+        assert!(!ollama_installed_matches_candidate(
+            "qwen2.5:7b",
+            "llama3.1:8b"
+        ));
     }
 
     // ── parse_repo_gguf_entries ──────────────────────────────────────
@@ -2152,9 +2179,7 @@ mod tests {
 
     #[test]
     fn test_parse_repo_gguf_entries_missing_size_defaults_to_zero() {
-        let entries = vec![
-            serde_json::json!({"path": "model.gguf"}),
-        ];
+        let entries = vec![serde_json::json!({"path": "model.gguf"})];
         let files = parse_repo_gguf_entries(entries);
         assert_eq!(files.len(), 1);
         assert_eq!(files[0].1, 0);
@@ -2185,7 +2210,12 @@ mod tests {
     fn test_hf_name_to_mlx_candidates_no_duplicates() {
         let candidates = hf_name_to_mlx_candidates("meta-llama/Llama-3.1-8B-Instruct");
         let unique: HashSet<_> = candidates.iter().collect();
-        assert_eq!(unique.len(), candidates.len(), "candidates should have no duplicates: {:?}", candidates);
+        assert_eq!(
+            unique.len(),
+            candidates.len(),
+            "candidates should have no duplicates: {:?}",
+            candidates
+        );
     }
 
     // ── hf_name_to_ollama_candidates edge cases ──────────────────────

@@ -2465,45 +2465,90 @@ GPU id = 1 (NVIDIA GeForce RTX 4090)
 
     #[test]
     fn test_bandwidth_rtx_20_series() {
-        assert_eq!(super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 2080 Ti"), Some(616.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 2060"), Some(336.0));
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 2080 Ti"),
+            Some(616.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 2060"),
+            Some(336.0)
+        );
     }
 
     // ── bandwidth: GTX 16 series ─────────────────────────────────────
 
     #[test]
     fn test_bandwidth_gtx_16_series() {
-        assert_eq!(super::gpu_memory_bandwidth_gbps("NVIDIA GeForce GTX 1660 Ti"), Some(288.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("NVIDIA GeForce GTX 1650"), Some(128.0));
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("NVIDIA GeForce GTX 1660 Ti"),
+            Some(288.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("NVIDIA GeForce GTX 1650"),
+            Some(128.0)
+        );
     }
 
     // ── bandwidth: RTX 50 series ─────────────────────────────────────
 
     #[test]
     fn test_bandwidth_rtx_50_series() {
-        assert_eq!(super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 5090"), Some(1792.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 5080"), Some(960.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 5070 Ti"), Some(896.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 5070"), Some(672.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 5060 Ti"), Some(448.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 5060"), Some(256.0));
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 5090"),
+            Some(1792.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 5080"),
+            Some(960.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 5070 Ti"),
+            Some(896.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 5070"),
+            Some(672.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 5060 Ti"),
+            Some(448.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("NVIDIA GeForce RTX 5060"),
+            Some(256.0)
+        );
     }
 
     // ── bandwidth: AMD RX 6000 series ────────────────────────────────
 
     #[test]
     fn test_bandwidth_amd_rx_6000() {
-        assert_eq!(super::gpu_memory_bandwidth_gbps("AMD Radeon RX 6950 XT"), Some(576.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("AMD Radeon RX 6700 XT"), Some(384.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("AMD Radeon RX 6600"), Some(224.0));
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("AMD Radeon RX 6950 XT"),
+            Some(576.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("AMD Radeon RX 6700 XT"),
+            Some(384.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("AMD Radeon RX 6600"),
+            Some(224.0)
+        );
     }
 
     // ── bandwidth: NVIDIA professional ───────────────────────────────
 
     #[test]
     fn test_bandwidth_nvidia_professional() {
-        assert_eq!(super::gpu_memory_bandwidth_gbps("NVIDIA RTX A6000"), Some(768.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("NVIDIA RTX A4000"), Some(448.0));
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("NVIDIA RTX A6000"),
+            Some(768.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("NVIDIA RTX A4000"),
+            Some(448.0)
+        );
         assert_eq!(super::gpu_memory_bandwidth_gbps("NVIDIA L40S"), Some(864.0));
         assert_eq!(super::gpu_memory_bandwidth_gbps("NVIDIA L4"), Some(300.0));
     }
@@ -2512,30 +2557,63 @@ GPU id = 1 (NVIDIA GeForce RTX 4090)
 
     #[test]
     fn test_bandwidth_apple_silicon_all() {
-        assert_eq!(super::gpu_memory_bandwidth_gbps("Apple M4 Ultra"), Some(819.0));
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("Apple M4 Ultra"),
+            Some(819.0)
+        );
         assert_eq!(super::gpu_memory_bandwidth_gbps("Apple M4"), Some(120.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("Apple M3 Ultra"), Some(800.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("Apple M3 Max"), Some(400.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("Apple M3 Pro"), Some(150.0));
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("Apple M3 Ultra"),
+            Some(800.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("Apple M3 Max"),
+            Some(400.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("Apple M3 Pro"),
+            Some(150.0)
+        );
         assert_eq!(super::gpu_memory_bandwidth_gbps("Apple M3"), Some(100.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("Apple M1 Pro"), Some(200.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("Apple M1 Ultra"), Some(800.0));
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("Apple M1 Pro"),
+            Some(200.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("Apple M1 Ultra"),
+            Some(800.0)
+        );
     }
 
     // ── bandwidth: AMD CDNA ──────────────────────────────────────────
 
     #[test]
     fn test_bandwidth_amd_cdna() {
-        assert_eq!(super::gpu_memory_bandwidth_gbps("AMD Instinct MI250X"), Some(3277.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("AMD Instinct MI210"), Some(1638.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("AMD Instinct MI100"), Some(1229.0));
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("AMD Instinct MI250X"),
+            Some(3277.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("AMD Instinct MI210"),
+            Some(1638.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("AMD Instinct MI100"),
+            Some(1229.0)
+        );
     }
 
     // ── bandwidth: AMD RDNA 4 ────────────────────────────────────────
 
     #[test]
     fn test_bandwidth_amd_rdna4() {
-        assert_eq!(super::gpu_memory_bandwidth_gbps("AMD Radeon RX 9070 XT"), Some(624.0));
-        assert_eq!(super::gpu_memory_bandwidth_gbps("AMD Radeon RX 9070"), Some(488.0));
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("AMD Radeon RX 9070 XT"),
+            Some(624.0)
+        );
+        assert_eq!(
+            super::gpu_memory_bandwidth_gbps("AMD Radeon RX 9070"),
+            Some(488.0)
+        );
     }
 }
