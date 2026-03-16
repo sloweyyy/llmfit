@@ -2,6 +2,7 @@
 name = "llmfit"
 version.workspace = true
 edition = "2024"
+build = "build.rs"
 authors = ["Alex Jones <alex@example.com>"]
 description = "Right-size LLM models to your system hardware. Interactive TUI and CLI to match models against available RAM, CPU, and GPU."
 license = "MIT"
@@ -26,3 +27,7 @@ ratatui = "0.30"
 crossterm = "0.29"
 axum = "0.8"
 tokio = { version = "1.47", features = ["rt-multi-thread", "signal", "net"] }
+
+[dev-dependencies]
+http-body-util = "0.1"
+tower = "0.5"
