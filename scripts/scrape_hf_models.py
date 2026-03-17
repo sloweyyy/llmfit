@@ -619,7 +619,7 @@ def scrape_model(repo_id: str) -> dict | None:
     if not total_params:
         params_by_dtype = safetensors.get("parameters", {})
         if params_by_dtype:
-            total_params = max(params_by_dtype.values())
+            total_params = sum(params_by_dtype.values())
 
     if not total_params:
         print(f"  ⚠ No parameter count found for {repo_id}", file=sys.stderr)
