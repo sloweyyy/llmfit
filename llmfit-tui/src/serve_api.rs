@@ -2,7 +2,8 @@ use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
 
 use axum::extract::{Path, Query, State};
-use axum::http::StatusCode;
+use axum::http::header::{CACHE_CONTROL, CONTENT_TYPE};
+use axum::http::{HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Json, Router};
@@ -13,6 +14,8 @@ use llmfit_core::fit::{
 use llmfit_core::hardware::{GpuBackend, SystemSpecs};
 use llmfit_core::models::{LlmModel, ModelDatabase, UseCase};
 use serde::{Deserialize, Serialize};
+
+include!(concat!(env!("OUT_DIR"), "/web_assets.rs"));
 
 #[derive(Clone)]
 struct AppState {
@@ -120,15 +123,11 @@ pub fn run_serve(
         context_limit,
     });
 
-    let app = Router::new()
-        .route("/health", get(health))
-        .route("/api/v1/system", get(system))
-        .route("/api/v1/models", get(models))
-        .route("/api/v1/models/top", get(top_models))
-        .route("/api/v1/models/{name}", get(model_by_name))
-        .with_state(state);
+    let app = build_router(state);
 
-    println!("llmfit API server listening on http://{}", addr);
+    println!("llmfit dashboard listening on http://{}/", addr);
+    println!("  Dashboard: http://{}/", addr);
+    println!("  API models: http://{}/api/v1/models", addr);
     println!("  GET /health");
     println!("  GET /api/v1/system");
     println!("  GET /api/v1/models?limit=20&min_fit=marginal&sort=score");
@@ -156,6 +155,19 @@ pub fn run_serve(
         .map_err(|e| e.message)
 }
 
+fn build_router(state: Arc<AppState>) -> Router {
+    Router::new()
+        .route("/", get(web_index))
+        .route("/assets/{*path}", get(web_asset))
+        .route("/health", get(health))
+        .route("/api/v1/system", get(system))
+        .route("/api/v1/models", get(models))
+        .route("/api/v1/models/top", get(top_models))
+        .route("/api/v1/models/{name}", get(model_by_name))
+        .route("/{*path}", get(spa_fallback))
+        .with_state(state)
+}
+
 async fn health(State(state): State<Arc<AppState>>) -> Json<serde_json::Value> {
     Json(serde_json::json!({
         "status": "ok",
@@ -174,6 +186,42 @@ async fn system(State(state): State<Arc<AppState>>) -> Json<serde_json::Value> {
         },
         "system": system_json(&state.specs),
     }))
+}
+
+async fn web_index() -> Response {
+    serve_web_path("/index.html")
+}
+
+async fn web_asset(Path(path): Path<String>) -> Response {
+    let asset_path = format!("/assets/{}", path.trim_start_matches('/'));
+    serve_web_path(&asset_path)
+}
+
+async fn spa_fallback(Path(path): Path<String>) -> Response {
+    if path.starts_with("api/") || path == "health" || path.starts_with("assets/") {
+        return StatusCode::NOT_FOUND.into_response();
+    }
+    serve_web_path("/index.html")
+}
+
+fn serve_web_path(path: &str) -> Response {
+    let Some(asset) = find_web_asset(path) else {
+        return StatusCode::NOT_FOUND.into_response();
+    };
+
+    let mut response = asset.bytes.to_vec().into_response();
+    response
+        .headers_mut()
+        .insert(CONTENT_TYPE, HeaderValue::from_static(asset.content_type));
+    response.headers_mut().insert(
+        CACHE_CONTROL,
+        HeaderValue::from_static("public, max-age=300"),
+    );
+    response
+}
+
+fn find_web_asset(path: &str) -> Option<&'static EmbeddedAsset> {
+    EMBEDDED_WEB_ASSETS.iter().find(|asset| asset.path == path)
 }
 
 async fn models(
@@ -568,5 +616,147 @@ fn detect_specs(memory_override: &Option<String>) -> SystemSpecs {
         }
     } else {
         specs
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::Body;
+    use axum::http::Request;
+    use http_body_util::BodyExt as _;
+    use std::future::Future;
+    use tower::ServiceExt;
+
+    fn test_state() -> Arc<AppState> {
+        let db = ModelDatabase::new();
+        Arc::new(AppState {
+            node_name: "test-node".to_string(),
+            os: "test-os".to_string(),
+            specs: SystemSpecs::detect(),
+            models: db.get_all_models().clone(),
+            context_limit: None,
+        })
+    }
+
+    fn test_router() -> Router {
+        build_router(test_state())
+    }
+
+    fn find_asset_path_with_ext(ext: &str) -> Option<&'static EmbeddedAsset> {
+        EMBEDDED_WEB_ASSETS
+            .iter()
+            .find(|asset| asset.path.starts_with("/assets/") && asset.path.ends_with(ext))
+    }
+
+    fn run_async<T>(future: impl Future<Output = T>) -> T {
+        tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .expect("tokio runtime")
+            .block_on(future)
+    }
+
+    #[test]
+    fn root_serves_index_html() {
+        run_async(async {
+            let response = test_router()
+                .oneshot(Request::builder().uri("/").body(Body::empty()).unwrap())
+                .await
+                .unwrap();
+
+            assert_eq!(response.status(), StatusCode::OK);
+            assert_eq!(
+                response.headers().get(CONTENT_TYPE).unwrap(),
+                "text/html; charset=utf-8"
+            );
+        });
+    }
+
+    #[test]
+    fn assets_route_serves_embedded_file_with_content_type() {
+        let Some(asset) = find_asset_path_with_ext(".js")
+            .or_else(|| find_asset_path_with_ext(".css"))
+            .or_else(|| find_asset_path_with_ext(".svg"))
+        else {
+            panic!("no embedded assets available under /assets/");
+        };
+
+        run_async(async {
+            let response = test_router()
+                .oneshot(
+                    Request::builder()
+                        .uri(asset.path)
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+
+            assert_eq!(response.status(), StatusCode::OK);
+            assert_eq!(
+                response.headers().get(CONTENT_TYPE).unwrap(),
+                asset.content_type
+            );
+        });
+    }
+
+    #[test]
+    fn unknown_non_api_routes_fallback_to_index() {
+        run_async(async {
+            let response = test_router()
+                .oneshot(
+                    Request::builder()
+                        .uri("/dashboard/models")
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+
+            assert_eq!(response.status(), StatusCode::OK);
+            assert_eq!(
+                response.headers().get(CONTENT_TYPE).unwrap(),
+                "text/html; charset=utf-8"
+            );
+        });
+    }
+
+    #[test]
+    fn existing_api_route_response_shape_is_preserved() {
+        run_async(async {
+            let response = test_router()
+                .oneshot(
+                    Request::builder()
+                        .uri("/api/v1/system")
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+
+            assert_eq!(response.status(), StatusCode::OK);
+            let bytes = response.into_body().collect().await.unwrap().to_bytes();
+            let value: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+            assert!(value.get("node").is_some());
+            assert!(value.get("system").is_some());
+        });
+    }
+
+    #[test]
+    fn unknown_api_paths_do_not_fallback_to_html() {
+        run_async(async {
+            let response = test_router()
+                .oneshot(
+                    Request::builder()
+                        .uri("/api/v1/not-found")
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+
+            assert_eq!(response.status(), StatusCode::NOT_FOUND);
+        });
     }
 }

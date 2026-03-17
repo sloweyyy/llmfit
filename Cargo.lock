@@ -2162,12 +2162,14 @@ dependencies = [
  "clap",
  "colored",
  "crossterm",
+ "http-body-util",
  "llmfit-core",
  "ratatui",
  "serde",
  "serde_json",
  "tabled",
  "tokio",
+ "tower",
 ]
 
 [[package]]

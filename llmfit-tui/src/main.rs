@@ -6,10 +6,18 @@ mod tui_events;
 mod tui_ui;
 
 use clap::{Parser, Subcommand};
+use std::net::{TcpStream, ToSocketAddrs};
+use std::process::Stdio;
+use std::thread;
+use std::time::Duration;
+
 use llmfit_core::fit::{ModelFit, SortColumn, backend_compatible};
 use llmfit_core::hardware::SystemSpecs;
 use llmfit_core::models::ModelDatabase;
 use llmfit_core::plan::{PlanRequest, estimate_model_plan, resolve_model_selector};
+
+const DEFAULT_DASHBOARD_HOST: &str = "127.0.0.1";
+const DEFAULT_DASHBOARD_PORT: u16 = 8787;
 
 #[derive(clap::ValueEnum, Clone, Copy, Debug)]
 enum SortArg {
@@ -542,7 +550,8 @@ PRECONDITIONS:
   The specified host:port must be available for binding.
 
 SIDE EFFECTS:
-  Binds an HTTP server on the specified host and port (default 0.0.0.0:8787).
+  Binds an HTTP server on the specified host and port (default 127.0.0.1:8787).
+  Also serves the local web dashboard at `/` on the same host/port.
   Runs until terminated.
 
 EXIT CODES:
@@ -551,10 +560,11 @@ EXIT CODES:
 
 AGENT USAGE:
   llmfit serve --port 8787
+  llmfit serve --host 0.0.0.0 --port 8787  # expose to other machines
   All endpoints return JSON. See API.md for the full endpoint reference.")]
     Serve {
         /// Host interface to bind
-        #[arg(long, default_value = "0.0.0.0")]
+        #[arg(long, default_value = "127.0.0.1")]
         host: String,
 
         /// Port to listen on
@@ -600,6 +610,110 @@ fn resolve_context_limit(max_context: Option<u32>) -> Option<u32> {
             None
         }
     }
+}
+
+fn dashboard_target_from_env() -> (String, u16) {
+    let host = std::env::var("LLMFIT_DASHBOARD_HOST")
+        .ok()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| DEFAULT_DASHBOARD_HOST.to_string());
+
+    let port = std::env::var("LLMFIT_DASHBOARD_PORT")
+        .ok()
+        .and_then(|raw| match raw.trim().parse::<u16>() {
+            Ok(value) => Some(value),
+            Err(_) => {
+                eprintln!(
+                    "Warning: invalid LLMFIT_DASHBOARD_PORT='{}'. Using {}.",
+                    raw, DEFAULT_DASHBOARD_PORT
+                );
+                None
+            }
+        })
+        .unwrap_or(DEFAULT_DASHBOARD_PORT);
+
+    (host, port)
+}
+
+fn dashboard_reachable(host: &str, port: u16) -> bool {
+    let Ok(mut addrs) = format!("{host}:{port}").to_socket_addrs() else {
+        return false;
+    };
+    let Some(addr) = addrs.next() else {
+        return false;
+    };
+    TcpStream::connect_timeout(&addr, Duration::from_millis(250)).is_ok()
+}
+
+fn ensure_dashboard_available(memory_override: &Option<String>, context_limit: Option<u32>) {
+    let (host, port) = dashboard_target_from_env();
+    let url = format!("http://{}:{}/", host, port);
+
+    if dashboard_reachable(&host, port) {
+        eprintln!("Dashboard: {}", url);
+        return;
+    }
+
+    let exe = match std::env::current_exe() {
+        Ok(path) => path,
+        Err(err) => {
+            eprintln!("Warning: could not resolve llmfit executable for dashboard launch: {err}");
+            return;
+        }
+    };
+
+    let mut command = std::process::Command::new(exe);
+    if let Some(memory) = memory_override {
+        command.arg("--memory").arg(memory);
+    }
+    if let Some(ctx) = context_limit {
+        command.arg("--max-context").arg(ctx.to_string());
+    }
+
+    command
+        .arg("serve")
+        .arg("--host")
+        .arg(&host)
+        .arg("--port")
+        .arg(port.to_string())
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+
+    let mut child = match command.spawn() {
+        Ok(child) => child,
+        Err(err) => {
+            eprintln!("Warning: could not start dashboard server: {err}");
+            return;
+        }
+    };
+
+    for _ in 0..20 {
+        if dashboard_reachable(&host, port) {
+            eprintln!("Dashboard: {}", url);
+            return;
+        }
+
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                eprintln!(
+                    "Warning: dashboard server exited early (status: {}). Run `llmfit serve` to inspect logs.",
+                    status
+                );
+                return;
+            }
+            Ok(None) => {}
+            Err(err) => {
+                eprintln!("Warning: could not check dashboard server status: {err}");
+                return;
+            }
+        }
+
+        thread::sleep(Duration::from_millis(100));
+    }
+
+    eprintln!("Dashboard starting: {}", url);
 }
 
 fn run_fit(
@@ -1328,6 +1442,11 @@ fn run_plan(
 fn main() {
     let cli = Cli::parse();
     let context_limit = resolve_context_limit(cli.max_context);
+    let auto_dashboard = !matches!(cli.command.as_ref(), Some(Commands::Serve { .. }));
+
+    if auto_dashboard {
+        ensure_dashboard_available(&cli.memory, context_limit);
+    }
 
     // If a subcommand is given, use classic CLI mode
     if let Some(command) = cli.command {
