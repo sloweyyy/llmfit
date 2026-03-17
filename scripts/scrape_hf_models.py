@@ -622,6 +622,10 @@ def scrape_model(repo_id: str) -> dict | None:
             total_params = sum(params_by_dtype.values())
 
     if not total_params:
+        gguf = info.get("gguf", {})
+        total_params = gguf.get("total")
+
+    if not total_params:
         print(f"  ⚠ No parameter count found for {repo_id}", file=sys.stderr)
         return None
 
