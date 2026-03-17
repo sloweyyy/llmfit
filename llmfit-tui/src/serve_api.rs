@@ -209,13 +209,13 @@ fn serve_web_path(path: &str) -> Response {
     };
 
     let mut response = asset.bytes.to_vec().into_response();
-    response.headers_mut().insert(
-        CONTENT_TYPE,
-        HeaderValue::from_static(asset.content_type),
-    );
     response
         .headers_mut()
-        .insert(CACHE_CONTROL, HeaderValue::from_static("public, max-age=300"));
+        .insert(CONTENT_TYPE, HeaderValue::from_static(asset.content_type));
+    response.headers_mut().insert(
+        CACHE_CONTROL,
+        HeaderValue::from_static("public, max-age=300"),
+    );
     response
 }
 

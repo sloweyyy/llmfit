@@ -85,7 +85,9 @@ fn generate_fallback_assets() -> String {
     output.push_str("  <body style=\\\"font-family: sans-serif; padding: 24px\\\">\n");
     output.push_str("    <h1>llmfit Web Dashboard</h1>\n");
     output.push_str("    <p>Frontend assets are missing.</p>\n");
-    output.push_str("    <p>From repo root run: <code>cd llmfit-web && npm ci && npm run build</code></p>\n");
+    output.push_str(
+        "    <p>From repo root run: <code>cd llmfit-web && npm ci && npm run build</code></p>\n",
+    );
     output.push_str("    <script src=\\\"/assets/fallback.js\\\"></script>\n");
     output.push_str("  </body>\n");
     output.push_str("</html>\"#;\n");
