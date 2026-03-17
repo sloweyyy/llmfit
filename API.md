@@ -4,7 +4,7 @@ This document is for agent/client builders integrating with `llmfit serve`.
 
 ## Purpose
 
-`llmfit serve` exposes node-local model fit analysis (same core data used by TUI/CLI) over HTTP.
+`llmfit serve` exposes node-local model fit analysis (same core data used by TUI/CLI) over HTTP and serves a local web dashboard.
 
 Primary use case:
 - Query each node in a cluster for top runnable models.
@@ -13,13 +13,13 @@ Primary use case:
 ## Start the server
 
 ```sh
-llmfit serve --host 0.0.0.0 --port 8787
+llmfit serve --port 8787
 ```
 
 Global flags still apply:
 
 ```sh
-llmfit --memory 24G --max-context 8192 serve --host 0.0.0.0 --port 8787
+llmfit --memory 24G --max-context 8192 serve --port 8787
 ```
 
 ## Base URL
@@ -30,7 +30,18 @@ Default local base URL:
 http://127.0.0.1:8787
 ```
 
+To expose outside localhost, pass `--host 0.0.0.0`.
+
+If you are building from source and want the dashboard embedded in `llmfit`, build web assets first:
+
+```sh
+cd llmfit-web && npm ci && npm run build
+```
+
 ## Endpoints
+
+### `GET /`
+Web dashboard entrypoint (same-origin UI for fit exploration).
 
 ### `GET /health`
 Liveness probe.
