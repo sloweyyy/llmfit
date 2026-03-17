@@ -686,3 +686,7 @@ Agent 会在后台调用 `llmfit recommend --json`，解读结果，并提议用
 ## 许可证
 
 MIT
+
+---
+
+*本文档由 [@JasonYeYuhe](https://github.com/JasonYeYuhe) 翻译并维护。如果您发现任何翻译问题或需要增加新特性说明，欢迎提交 Issue 或与我联系。*
