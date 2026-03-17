@@ -40,6 +40,17 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
 
+      - name: Build web dashboard assets
+        run: |
+          cd llmfit-web
+          npm ci
+          npm run build
+
+      - name: Run web unit tests
+        run: |
+          cd llmfit-web
+          npm test
+
       - name: Cache cargo registry
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
@@ -96,6 +107,12 @@ jobs:
         with:
           components: clippy
 
+      - name: Build web dashboard assets
+        run: |
+          cd llmfit-web
+          npm ci
+          npm run build
+
       - name: Cache cargo registry
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
@@ -133,6 +150,12 @@ jobs:
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Build web dashboard assets
+        run: |
+          cd llmfit-web
+          npm ci
+          npm run build
 
       - name: Cache cargo registry
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
